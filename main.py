@@ -2,14 +2,16 @@
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from postgrest.exceptions import APIError as SupabaseAPIError
 
 from app.api.v1 import api_router
 from app.config.settings import settings
 from app.core.logging import get_logger, setup_logging
-from app.models.schemas import RootResponse
+from app.models.schemas import AnalysisReport, RootResponse
+from app.services import pdf_service, report_service
 from app.services.ai_service import ai_service
 from app.core.exceptions import (
     supabase_exception_handler, 

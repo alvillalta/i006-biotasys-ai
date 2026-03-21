@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Informe de Microbiota - {{ study_code }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin-top: 1.5cm;
+            margin-bottom: 2cm;
+            margin-left: 1.5cm;
+            margin-right: 1.5cm;
+            /* Footer repetitivo en todas las páginas */
+            @frame footer_frame {
+                -pdf-frame-content: footer_content;
+                left: 1.5cm;
+                right: 1.5cm;
+                bottom: 1cm;
+                height: 1cm;
+            }
+        }
+        
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 10pt;
+            color: #333333;
+            line-height: 1.4;
+        }
+        
+        .header-title {
+            color: #666666;
+            font-size: 11pt;
+            margin-bottom: 20px;
+        }
+        
+        /* Layout Tables */
+        .info-table { width: 100%; margin-bottom: 20px; }
+        .info-label { font-size: 9pt; color: #666666; margin-bottom: 2px; }
+        .info-value { font-size: 11pt; font-weight: bold; color: #1a1a1a; }
+        
+        .tags-table { margin-bottom: 20px; }
+        .tag-cell {
+            background-color: #e6f2e6;
+            color: #2d7a3a;
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-size: 9pt;
+            font-weight: bold;
+            text-align: center;
+        }
+        .tag-gap { width: 10px; }
+
+        h2 {
+            color: #1a1a1a;
+            font-size: 13pt;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #dddddd;
+        }
+
+        .summary-text {
+            font-size: 10pt;
+            color: #444444;
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+
+        /* Tarjetas de métricas simuladas con tablas */
+        .grid-table { width: 100%; margin-bottom: 20px; }
+        .metric-card {
+            background-color: #f8f9fa;
+            border-left: 3px solid #2c5aa0;
+            padding: 12px;
+        }
+        .metric-value { font-size: 14pt; font-weight: bold; color: #2c5aa0; margin-bottom: 2px; }
+        .metric-title { font-size: 10pt; font-weight: bold; color: #333; }
+        .metric-desc { font-size: 9pt; color: #666; }
+
+        /* Tablas de Datos limpias (Página 2) */
+        .data-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .data-table th {
+            text-align: left;
+            padding: 8px 0;
+            border-bottom: 1px solid #999;
+            font-size: 10pt;
+            color: #333;
+            font-weight: bold;
+        }
+        .data-table td {
+            padding: 8px 0;
+            border-bottom: 1px solid #eeeeee;
+            font-size: 10pt;
+            vertical-align: top;
+        }
+        
+        .row-title { font-weight: bold; color: #1a1a1a; }
+        .row-subtitle { color: #666; font-size: 9pt; margin-top: 2px; }
+
+        .footer {
+            font-size: 8pt;
+            color: #999;
+            text-align: right;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Footer repetitivo en cada página -->
+    <div id="footer_content">
+        <div class="footer">
+            Generado por Biotasys Engine v1.2.1 | Estudio: {{ study_code }} | Página <pdf:pagenumber /> de <pdf:pagecount />
+        </div>
+    </div>
+
+    <!-- PÁGINA 1 -->
+    <div class="header-title">Informe de microbiota intestinal provisto por Biotasys Engine</div>
+
+    <!-- Datos del Estudio -->
+    <table class="info-table">
+        <tr>
+            <td width="33%">
+                <div class="info-label">Paciente:</div>
+                <div class="info-value">{{ patient_info.id or patient_id|default('N/D') }}</div>
+            </td>
+            <td width="33%">
+                <div class="info-label">Estudio:</div>
+                <div class="info-value">{{ study_code }}</div>
+            </td>
+            <td width="33%">
+                <div class="info-label">Fecha de análisis:</div>
+                <div class="info-value">{{ study_date }}</div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- 1. FINAL OBSERVATIONS (sin risk_score)       -->
+    <!-- ============================================ -->
+    <h1 style="font-weight: bold; font-size: 14pt;">
+        {{ final_observations.global_indicator|default('N/D') }}
+    </h1>
+    <div class="conclusion-box">
+        <div class="summary-text" style="margin-bottom: 10px;">
+            {{ final_observations.conclusions }}
+        </div>
+        {% if final_observations.conclusion_tags %}
+        <table class="tags-table">
+            <tr>
+                {% for tag in final_observations.conclusion_tags %}
+                <td class="tag-cell">{{ tag }}</td>
+                <td class="tag-gap"></td>
+                {% endfor %}
+            </tr>
+        </table>
+        {% endif %}
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 2. GENERAL SUMMARY                           -->
+    <!-- ============================================ -->
+
+    <!-- summary -->
+    <h2>Resumen general</h2>
+    <div class="summary-text">
+        {{ general_summary.summary|default('Sin resumen disponible') }}
+    </div>
+
+    <!-- shannon + F/B ratio -->
+    <table class="grid-table">
+        <tr>
+            <td width="48%">
+                <div class="metric-card">
+                    <div class="metric-title">{{ general_summary.shannon_range|default('Diversidad') }}</div>
+                    <div class="metric-value">{{ "%.2f"|format(general_summary.shannon_index|default(0)) }}</div>
+                    <div class="metric-desc">Diversidad alfa (Shannon)</div>
+                </div>
+            </td>
+            <td width="4%"></td>
+            <td width="48%">
+                <div class="metric-card" style="border-left-color: #28a745;">
+                    <div class="metric-title">{{ general_summary.firmicutes_bacteroidetes_range|default('Ratio') }}</div>
+                    <div class="metric-value">{{ "%.2f"|format(general_summary.firmicutes_bacteroidetes_ratio|default(0)) }}</div>
+                    <div class="metric-desc">Ratio Firmicutes / Bacteroidetes</div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- summary_tags -->
+    <table class="tags-table">
+        <tr>
+            {% for tag in (general_summary.summary_tags or [])[:4] %}
+            <td class="tag-cell">{{ tag }}</td>
+            <td class="tag-gap"></td>
+            {% endfor %}
+        </tr>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- 3. BACTERIAL DIVERSITY                       -->
+    <!-- ============================================ -->
+    <h2>Diversidad y riqueza</h2>
+    <table class="data-table">
+        {% for item in (bacterial_diversity or []) %}
+        <tr>
+            <td width="40%" class="row-title">{{ item.diversity_headline }}</td>
+            <td width="60%">{{ item.clinical_implication }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="2">Sin datos detallados de diversidad.</td></tr>
+        {% endfor %}
+    </table>
+
+    <!-- ============================================ -->
+    <!-- 4. BACTERIAL COMPOSITION                     -->
+    <!-- ============================================ -->
+    <h2>Composición bacteriana</h2>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th width="30%">Género / Filo</th>
+                <th width="20%">Presencia</th>
+                <th width="50%">Implicación clínica</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in (bacterial_composition or []) %}
+            <tr>
+                <td class="row-title">{{ item.gender }}</td>
+                <td>{{ item.presence }}</td>
+                <td>{{ item.clinical_implication }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="3">Sin datos de composición bacteriana.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <pdf:nextpage />
+
+    <!-- PÁGINA 2 -->
+
+    <!-- ============================================ -->
+    <!-- 5. OPPORTUNISTIC MICROORGANISMS              -->
+    <!-- ============================================ -->
+    <h2>Microorganismos oportunistas</h2>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th width="25%">Microorganismo</th>
+                <th width="20%">Abundancia</th>
+                <th width="55%">Implicación clínica</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in (opportunistic_microorganisms or []) %}
+            <tr>
+                <td class="row-title">{{ item.microorganism }}</td>
+                <td>{{ item.abundance_status }}</td>
+                <td>{{ item.clinical_implication }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3">No se detectaron microorganismos oportunistas con proliferación anómala.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- 6. INFERRED METABOLIC FUNCTIONS              -->
+    <!-- ============================================ -->
+    <h2>Funciones metabólicas inferidas</h2>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th width="25%">Función metabólica</th>
+                <th width="15%">Estado</th>
+                <th width="10%">Score</th>
+                <th width="50%">Implicación clínica</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in (inferred_metabolic_functions or []) %}
+            <tr>
+                <td class="row-title">{{ item.metabolic_function }}</td>
+                <td>{{ item.activity_status }}</td>
+                <td>{{ item.activity_score }}</td>
+                <td>{{ item.clinical_implication }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4">Sin datos metabólicos disponibles.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>
