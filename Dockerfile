@@ -24,18 +24,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
 # Copy project configuration files
-COPY pyproject.toml uv.lock ./
+COPY pyproject.toml ./
+COPY uv.lock* ./
 
 # Install dependencies
-# --frozen ensures we use the exact versions from uv.lock
-# --no-install-project avoids installing the package itself yet (just deps)
-RUN uv sync --frozen --no-install-project --no-dev
+# If uv.lock exists, use it; otherwise resolve from pyproject.toml
+RUN if [ -f uv.lock ]; then uv sync --frozen --no-install-project --no-dev; else uv sync --no-install-project --no-dev; fi
 
 # Copy the rest of the application code
 COPY . .
 
 # Install the project itself
-RUN uv sync --frozen --no-dev
+RUN if [ -f uv.lock ]; then uv sync --frozen --no-dev; else uv sync --no-dev; fi
 
 # Expose port
 EXPOSE 8000
